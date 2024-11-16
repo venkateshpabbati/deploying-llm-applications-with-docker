@@ -18,5 +18,7 @@ COPY app.py /app
 # Expose the port that Gradio will run on (default is 7860)
 EXPOSE 7860
 
+ENV GRADIO_SERVER_NAME="0.0.0.0"
+
 # Command to run your application
 CMD ["python", "app.py"]

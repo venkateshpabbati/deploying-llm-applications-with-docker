@@ -1,16 +1,19 @@
 import os
-import gradio as gr
 
+import gradio as gr
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.embeddings.mixedbreadai import MixedbreadAIEmbedding
 from llama_index.llms.groq import Groq
 from llama_parse import LlamaParse
 
 # API keys
-llama_cloud_key = os.getenv("LLAMA_CLOUD_API_KEY")
-groq_key = os.getenv("GROQ_API_KEY")
-mxbai_key = os.getenv("MXBAI_API_KEY")
-
+llama_cloud_key = os.environ.get("LLAMA_CLOUD_API_KEY")
+groq_key = os.environ.get("GROQ_API_KEY")
+mxbai_key = os.environ.get("MXBAI_API_KEY")
+if not (llama_cloud_key and groq_key and mxbai_key):
+    raise ValueError(
+        "API Keys not found! Ensure they are passed to the Docker container."
+    )
 
 # models name
 llm_model_name = "llama-3.1-70b-versatile"
@@ -46,19 +49,14 @@ llm = Groq(model="llama-3.1-70b-versatile", api_key=groq_key)
 
 # File processing function
 def load_files(file_path: str):
-    try:
-        global vector_index
-        document = SimpleDirectoryReader(
-            input_files=[file_path], file_extractor=file_extractor
-        ).load_data()
-        vector_index = VectorStoreIndex.from_documents(
-            document, embed_model=embed_model
-        )
-        print(f"Parsing done for {file_path}")
-        filename = os.path.basename(file_path)
-        return f"Ready to provide responses based on {filename}"
-    except Exception as e:
-        return f"An error occurred: {e}"
+    global vector_index
+    document = SimpleDirectoryReader(
+        input_files=[file_path], file_extractor=file_extractor
+    ).load_data()
+    vector_index = VectorStoreIndex.from_documents(document, embed_model=embed_model)
+    print(f"Parsing done for {file_path}")
+    filename = os.path.basename(file_path)
+    return f"Ready to provide responses based on {filename}"
 
 
 # Respond function
@@ -75,7 +73,7 @@ def respond(message, history):
 
 # UI Setup
 with gr.Blocks(
-    theme=gr.themes.Citrus(
+    theme=gr.themes.Default(
         primary_hue="green",
         secondary_hue="blue",
         font=[gr.themes.GoogleFont("Poppins")],
@@ -95,7 +93,7 @@ with gr.Blocks(
         with gr.Column(scale=3):
             chatbot = gr.ChatInterface(
                 fn=respond,
-                chatbot=gr.Chatbot(height=500),
+                chatbot=gr.Chatbot(height=300),
                 theme="soft",
                 show_progress="full",
                 textbox=gr.Textbox(
