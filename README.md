@@ -3,6 +3,7 @@
 There are two main approaches to developing and deploying AI applications:
 - Fully Open Source: This approach emphasizes privacy and data protection.
 - Fully Closed Source: This method involves integrating multiple APIs and cloud services.
+  
 Both approaches have their advantages and disadvantages. In our case, we have chosen the second approach, where we will integrate multiple AI services. This allows us to build an AI application that is fast and takes only a few seconds to build and deploy. Our main focus is to reduce the Docker image size, which can be effectively achieved by integrating multiple AI services.
 We will be building an all-purpose document Q&A chatbot that allows users to upload any documents and chat with it at real-time speed. It is quite similar to the Google’s NotebookLM. 
 
