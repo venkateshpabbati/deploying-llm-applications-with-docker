@@ -50,25 +50,41 @@ llm = Groq(model="llama-3.1-70b-versatile", api_key=groq_key)
 # File processing function
 def load_files(file_path: str):
     global vector_index
-    document = SimpleDirectoryReader(
-        input_files=[file_path], file_extractor=file_extractor
-    ).load_data()
+    if not file_path:
+        return "No file path provided. Please upload a file."
+    
+    valid_extensions = ', '.join(file_extractor.keys())
+    if not any(file_path.endswith(ext) for ext in file_extractor):
+        return f"The parser can only parse the following file types: {valid_extensions}"
+
+    document = SimpleDirectoryReader(input_files=[file_path], file_extractor=file_extractor).load_data()
     vector_index = VectorStoreIndex.from_documents(document, embed_model=embed_model)
-    print(f"Parsing done for {file_path}")
+    print(f"Parsing completed for: {file_path}")
     filename = os.path.basename(file_path)
-    return f"Ready to provide responses based on {filename}"
+    return f"Ready to provide responses based on: {filename}"
 
 
 # Respond function
 def respond(message, history):
-    # Use the preloaded LLM
-    query_engine = vector_index.as_chat_engine(llm=llm)
-    streaming_response = query_engine.stream_chat(message)
-    partial_text = ""
-    for new_text in streaming_response.response_gen:
-        partial_text += new_text
-        # Yield an empty string to cleanup the message textbox and the updated conversation history
-        yield partial_text
+    try:
+        # Use the preloaded LLM
+        query_engine = vector_index.as_query_engine(streaming=True, llm=llm)
+        streaming_response = query_engine.query(message)
+        partial_text = ""
+        for new_text in streaming_response.response_gen:
+            partial_text += new_text
+            # Yield an empty string to cleanup the message textbox and the updated conversation history
+            yield partial_text
+    except (AttributeError, NameError):
+        print("An error occurred while processing your request.")
+        yield "Please upload the file to begin chat."
+
+
+# Clear function
+def clear_state():
+    global vector_index
+    vector_index = None
+    return [None, None, None]
 
 
 # UI Setup
@@ -105,7 +121,7 @@ with gr.Blocks(
     # Set up Gradio interactions
     btn.click(fn=load_files, inputs=file_input, outputs=output)
     clear.click(
-        lambda: [None, None],
+        fn=clear_state,  # Use the clear_state function
         outputs=[file_input, output],
     )
 
