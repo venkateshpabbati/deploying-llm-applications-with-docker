@@ -1,5 +1,5 @@
 gradio
-llama-index-embeddings-mixedbreadai
 llama-index-llms-groq
 llama-index
 llama-index-embeddings-cohere
+#llama-index-embeddings-mixedbreadai
